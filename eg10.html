@@ -31,6 +31,8 @@
         // Call 'getNameFunc' on 'obj', invoke the returned function, and write the result to the document
         // This prints "My Object" because the closure captures 'obj' as 'x'
         document.write(obj.getNameFunc()());
+
+        /* directly using this modified the scope to global but using x = this captured the local scope of the func getNameFunc */ 
     </script>
 </head>
 <body>
