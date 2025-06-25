@@ -23,14 +23,22 @@
 
         // 2.
         function Person(name) { // function args are private to the function
-            this.getName = function() {
+            this.getName = function() { // priviledged method
                 return name;
             }
 
-            this.setName = function(val) {
+            this.setName = function(val) { // priviledged method
                 name = val;
             }
         }
+        
+        /* 
+            Privileged entities => are methods defined inside a constructor function (like getName and setName above) that have access to the function's private variables (like name) via closure.
+            They can access and modify private data, acting as a controlled interface to it.
+
+            i.e. they live in the same scope as that of the private entities and they expose the private entities to the instances of that function.
+        
+        */ 
 
         var person = new Person("Robert");
         console.log(person.getName()); // Robert
@@ -38,7 +46,48 @@
         person.setName("Jhonny");
         console.log(person.getName()); // Jhonny
 
-        
+        // 3.
+
+        function createFunctions() {
+            var res = new Array();
+
+            for (var i = 0; i < 10; i++) {
+                res[i] = function() { // this stores func construct at the index of the res array
+                    return i; 
+                } // we haven't invoked the func exp immediately hence
+            }
+
+            return res;
+        }
+
+        /**
+         * Creates an array of functions, each returning its own index value (0 to 9).
+         * This uses an Immediately Invoked Function Expression (IIFE) to capture the current value of 'i'
+         * for each function, avoiding the closure problem with 'var'.
+         *
+         * @returns {Array<Function>} An array of functions, where each function returns its corresponding index.
+         */
+        function createFunctionsCorrected() {
+            var res = new Array();
+
+            for (var i = 0; i < 10; i++) {
+                // IIFE: Immediately invokes the function with the current value of 'i' as 'num'
+                // The returned function closes over 'num', preserving its value for each index
+                res[i] = function(num) {
+                    return function() {
+                        return num;
+                    }
+                }(i); // invoke function | function call
+            }
+
+            return res;
+        }
+
+        var funcs = createFunctionsCorrected();
+
+        for (var i = 0; i < funcs.length; i++) {
+            document.write(funcs[i]() + "<br />"); // the last value of var i = 10, therefore when the func is called, it returns the last val of var i on each index stored func construct hence we get 10 printed 10 times!
+        }
     </script>
 </head>
 <body>
