@@ -7,7 +7,18 @@
     <script type="text/javascript">
         /*------------------------------ Function Internals ------------------------------*/
         // 4.
-        
+        var name = "Window";
+
+        var obj = {
+            name: "My Object",
+            getNameFunc: function() {
+                return function() {
+                    return this.name;
+                }
+            }
+        }
+
+        document.write(obj.getNameFunc()());
     </script>
 </head>
 <body>
