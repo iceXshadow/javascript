@@ -17,11 +17,16 @@
         var obj = {
             name: "My Object", // 'name' property specific to 'obj'
             getNameFunc: function() { // Method that returns a function (demonstrates closure)
-                var x = this; // Capture the current 'this' (which refers to 'obj') in variable 'x'
+                var that = this; // Capture the current 'this' (which refers to 'obj') in variable 'that'
                 return function() {
                     // return this.name; // (commented out) would refer to the global or calling context's 'name'
-                    return x.name; // Always refers to 'obj.name' due to closure over 'x'
+                    return that.name; // Always refers to 'obj.name' due to closure over 'that' [(), getNameFunc(), object]
                 }
+            },
+
+            // without closure
+            getName: function() {
+                return this.name;
             }
         }
 
