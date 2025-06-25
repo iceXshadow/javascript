@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+
+        <script type="text/javascript">
+            if (true) {
+                // conditional stmts & loops are called non-lexical scopes
+                var x = 10; // var stmt in a non-lexical scope will do "hoisting": hoisting means to move to the top of the page (becomes globally-scoped)
+            } // hoisting is an anti-pattern
+
+            console.log(x); // why o/p is 10 even if x in accessed outside if block --> hoisting & lexical scope
+
+            // functions and objects are called lexical-scopes
+            function abc () {
+                var y = 50;
+            }
+            abc();
+
+            console.log(y); // output is undefined cuz in lexical scope --> var stmt will not do "hoisting"
+        </script>
+    </head>
+    <body></body>
+</html>

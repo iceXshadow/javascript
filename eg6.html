@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript">
+
+        // Demonstrates 'var' hoisting and the effect of 'with' on scope.
+        function f1() {
+            var x = 100; // Declare and initialize x with 100
+            
+            // with statement will hijack the scope chain and become the Activation Object.
+            with(document.location) { // 'with' creates a new lexical scope using document.location's properties
+                var x = 500; // Redeclares x (still function-scoped, not block-scoped)
+                // 'var' declarations are hoisted to the top of the function scope,
+                // so this 'x' is the same as the one declared above.
+            }
+
+            console.log(x); // Logs 500, because 'var' is function-scoped and the last assignment was x = 500, [with, f1(), window]
+        }
+
+        f1();
+
+
+        // bad practice to use with stmts.
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

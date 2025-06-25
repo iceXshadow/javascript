@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript">
+
+        var color = "blue";  // [window]
+
+        function changeColor() {  // outer function, [changeColor(), window]
+            var anotherColor = "red";
+
+            function swapColors() { // inner function, [swapColors(), changeColor(), window]
+                var tempColor = anotherColor;// [swapColors(), changeColor()]:- identifier search for var anotherColor happens here -> AO = swapColors()
+                anotherColor = color; // [swapColors(), changeColor() -> for anotherColor, window: Global Scope -> for color]
+                color = tempColor;
+            }
+
+            swapColors();
+        }
+        // SCA: Scope Chain Augmentation =>  the order of searching the scopes.
+        // Activation Object => the very first scope in the scope chain is referred as activation obj.
+        // window is the least priviledged scope, swapColors is the most priviledged: consumes more memory as it can access three scopes.
+        changeColor();
+
+        console.log("Color is now: " + color);
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
