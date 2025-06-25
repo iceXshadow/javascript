@@ -6,22 +6,34 @@
     <title>Document</title>
     <script type="text/javascript">
         /*------------------------------ Function Internals ------------------------------*/
-        // 4.
+        // 4. Closure => a nested function declaration!
+
+        // SCA[window] -> this keyword inside a closure changes the SCA, points to the scope where the last identifier was retrieved. (write, log are identifiers for functions)
+
+        // Declare a global variable 'name' and assign it the value "Window"
         var name = "Window";
 
+        // Define an object 'obj' with a property 'name' and a method 'getNameFunc'
         var obj = {
-            name: "My Object",
-            getNameFunc: function() {
+            name: "My Object", // 'name' property specific to 'obj'
+            getNameFunc: function() { // Method that returns a function (demonstrates closure)
+                var x = this; // Capture the current 'this' (which refers to 'obj') in variable 'x'
                 return function() {
-                    return this.name;
+                    // return this.name; // (commented out) would refer to the global or calling context's 'name'
+                    return x.name; // Always refers to 'obj.name' due to closure over 'x'
                 }
             }
         }
 
+        // Log the global 'name' variable to the console (should print "Window")
+        console.log(this.name)
+
+        // Call 'getNameFunc' on 'obj', invoke the returned function, and write the result to the document
+        // This prints "My Object" because the closure captures 'obj' as 'x'
         document.write(obj.getNameFunc()());
     </script>
 </head>
 <body>
-    
+    <!-- Body is empty; all output is handled by JavaScript -->
 </body>
 </html>
