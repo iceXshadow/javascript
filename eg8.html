@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript">
+        /*------------------------------ Function Internals ------------------------------*/
+        // 1.
+        function count(a, b) { // whenever we declare arguments array gets created implicitly
+
+            console.log(arguments[0]); // refers to a
+            console.log(arguments[1]); // refers to b
+            
+            console.log(arguments.length); 
+            
+            var c = a + b;
+
+            console.log(c);
+        }
+
+        count(10, 20);
+
+        // 2.
+        function Person(name) { // function args are private to the function
+            this.getName = function() {
+                return name;
+            }
+
+            this.setName = function(val) {
+                name = val;
+            }
+        }
+
+        var person = new Person("Robert");
+        console.log(person.getName()); // Robert
+        
+        person.setName("Jhonny");
+        console.log(person.getName()); // Jhonny
+
+        
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
