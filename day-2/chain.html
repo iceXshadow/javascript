@@ -25,10 +25,20 @@
         // Inherit from SuperType by setting SubType's prototype to a new SuperType instance
         SubType.prototype = new SuperType(); // linking one prototype to another
 
-        // Add a method to SubType's prototype
-        SubType.prototype.getSubValue = function() {
-            return this.subproperty;
+        SubType.prototype = {
+            getSubValue: function() {
+                return this.subproperty;
+            },
+
+            someOtherMethod : function() {
+                return false;
+            }
         }
+        
+        // Add a method to SubType's prototype
+        // SubType.prototype.getSubValue = function() {
+        //     return this.subproperty;
+        // }
 
         // Create an instance of SubType
         var instance = new SubType(); // [instance, SubType.prototype, SuperType.prototype]
