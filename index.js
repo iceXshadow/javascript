@@ -10,230 +10,411 @@ let selectedIndex = -1;
 let isConsoleSetup = false;
 let autocompleteTimeout = null;
 
-// JavaScript Syntax Highlighting Engine
+// Token-based Syntax Highlighting (Fixed approach)
 class SyntaxHighlighter {
-    constructor() {
-        this.keywords = [
-            'abstract', 'arguments', 'await', 'boolean', 'break', 'byte', 'case', 'catch',
-            'char', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do',
-            'double', 'else', 'enum', 'eval', 'export', 'extends', 'false', 'final',
-            'finally', 'float', 'for', 'function', 'goto', 'if', 'implements', 'import',
-            'in', 'instanceof', 'int', 'interface', 'let', 'long', 'native', 'new',
-            'null', 'package', 'private', 'protected', 'public', 'return', 'short',
-            'static', 'super', 'switch', 'synchronized', 'this', 'throw', 'throws',
-            'transient', 'true', 'try', 'typeof', 'var', 'void', 'volatile', 'while',
-            'with', 'yield', 'async', 'of', 'undefined'
-        ];
-        
-        this.builtins = [
-            'Array', 'Boolean', 'Date', 'Error', 'Function', 'JSON', 'Math', 'Number',
-            'Object', 'RegExp', 'String', 'console', 'document', 'window', 'parseInt',
-            'parseFloat', 'isNaN', 'isFinite', 'setTimeout', 'setInterval', 'clearTimeout',
-            'clearInterval', 'Promise', 'Symbol', 'Map', 'Set', 'WeakMap', 'WeakSet'
-        ];
+constructor() {
+    this.keywords = [
+    "abstract",
+    "arguments",
+    "await",
+    "boolean",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "eval",
+    "export",
+    "extends",
+    "false",
+    "final",
+    "finally",
+    "float",
+    "for",
+    "function",
+    "goto",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "instanceof",
+    "int",
+    "interface",
+    "let",
+    "long",
+    "native",
+    "new",
+    "null",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "short",
+    "static",
+    "super",
+    "switch",
+    "synchronized",
+    "this",
+    "throw",
+    "throws",
+    "transient",
+    "true",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "volatile",
+    "while",
+    "with",
+    "yield",
+    "async",
+    "of",
+    "undefined",
+    ];
+
+    this.builtins = [
+    "Array",
+    "Boolean",
+    "Date",
+    "Error",
+    "Function",
+    "JSON",
+    "Math",
+    "Number",
+    "Object",
+    "RegExp",
+    "String",
+    "console",
+    "document",
+    "window",
+    "parseInt",
+    "parseFloat",
+    "isNaN",
+    "isFinite",
+    "setTimeout",
+    "setInterval",
+    "clearTimeout",
+    "clearInterval",
+    "Promise",
+    "Symbol",
+    "Map",
+    "Set",
+    "WeakMap",
+    "WeakSet",
+    ];
+}
+
+tokenize(code) {
+    const tokens = [];
+    let i = 0;
+
+    while (i < code.length) {
+    const char = code[i];
+
+    // Skip whitespace but preserve it
+    if (/\s/.test(char)) {
+        let whitespace = "";
+        while (i < code.length && /\s/.test(code[i])) {
+        whitespace += code[i];
+        i++;
+        }
+        tokens.push({ type: "whitespace", value: whitespace });
+        continue;
     }
 
-    highlight(code) {
-        let highlighted = this.escapeHtml(code);
-        
-        // Apply syntax highlighting in order
-        highlighted = this.highlightComments(highlighted);
-        highlighted = this.highlightStrings(highlighted);
-        highlighted = this.highlightNumbers(highlighted);
-        highlighted = this.highlightKeywords(highlighted);
-        highlighted = this.highlightBuiltins(highlighted);
-        highlighted = this.highlightFunctions(highlighted);
-        highlighted = this.highlightOperators(highlighted);
-        
-        return highlighted;
+    // Comments
+    if (char === "/" && i + 1 < code.length) {
+        if (code[i + 1] === "/") {
+        // Single line comment
+        let comment = "";
+        while (i < code.length && code[i] !== "\n") {
+            comment += code[i];
+            i++;
+        }
+        tokens.push({ type: "comment", value: comment });
+        continue;
+        } else if (code[i + 1] === "*") {
+        // Multi-line comment
+        let comment = "";
+        while (i < code.length - 1) {
+            comment += code[i];
+            if (code[i] === "*" && code[i + 1] === "/") {
+            comment += code[i + 1];
+            i += 2;
+            break;
+            }
+            i++;
+        }
+        tokens.push({ type: "comment", value: comment });
+        continue;
+        }
     }
 
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    // Strings
+    if (char === '"' || char === "'" || char === "`") {
+        const quote = char;
+        let string = quote;
+        i++;
+        while (i < code.length) {
+        if (code[i] === quote && code[i - 1] !== "\\") {
+            string += code[i];
+            i++;
+            break;
+        }
+        string += code[i];
+        i++;
+        }
+        tokens.push({ type: "string", value: string });
+        continue;
     }
 
-    highlightComments(code) {
-        // Single line comments
-        code = code.replace(/(\/\/.*$)/gm, '<span class="comment">$1</span>');
-        // Multi-line comments
-        code = code.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="comment">$1</span>');
-        return code;
+    // Numbers
+    if (/\d/.test(char)) {
+        let number = "";
+        while (i < code.length && /[\d.eE+\-xXbBoO]/.test(code[i])) {
+        number += code[i];
+        i++;
+        }
+        tokens.push({ type: "number", value: number });
+        continue;
     }
 
-    highlightStrings(code) {
-        // Template literals
-        code = code.replace(/(`(?:[^`\\]|\\.)*`)/g, '<span class="string">$1</span>');
-        // Double quotes
-        code = code.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="string">$1</span>');
-        // Single quotes
-        code = code.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="string">$1</span>');
-        return code;
+    // Identifiers and keywords
+    if (/[a-zA-Z_$]/.test(char)) {
+        let identifier = "";
+        while (i < code.length && /[a-zA-Z0-9_$]/.test(code[i])) {
+        identifier += code[i];
+        i++;
+        }
+
+        let type = "identifier";
+        if (this.keywords.includes(identifier)) {
+        type = "keyword";
+        } else if (this.builtins.includes(identifier)) {
+        type = "builtin";
+        } else if (i < code.length && /\s*\(/.test(code.slice(i))) {
+        type = "function";
+        }
+
+        tokens.push({ type, value: identifier });
+        continue;
     }
 
-    highlightNumbers(code) {
-        // Numbers (including decimals, hex, binary, octal)
-        code = code.replace(/\b(0[xX][0-9a-fA-F]+|0[bB][01]+|0[oO][0-7]+|\d+\.?\d*([eE][+-]?\d+)?)\b/g, 
-            '<span class="number">$1</span>');
-        return code;
+    // Operators and punctuation
+    if (/[+\-*/%=<>!&|^~?:;,.()[\]{}]/.test(char)) {
+        tokens.push({ type: "operator", value: char });
+        i++;
+        continue;
     }
 
-    highlightKeywords(code) {
-        const keywordPattern = new RegExp(`\\b(${this.keywords.join('|')})\\b`, 'g');
-        return code.replace(keywordPattern, '<span class="keyword">$1</span>');
+    // Default: treat as text
+    tokens.push({ type: "text", value: char });
+    i++;
     }
 
-    highlightBuiltins(code) {
-        const builtinPattern = new RegExp(`\\b(${this.builtins.join('|')})\\b`, 'g');
-        return code.replace(builtinPattern, '<span class="builtin">$1</span>');
+    return tokens;
+}
+
+highlight(code) {
+    const tokens = this.tokenize(code);
+    const container = document.createElement("div");
+
+    tokens.forEach((token) => {
+    const span = document.createElement("span");
+    span.textContent = token.value;
+
+    switch (token.type) {
+        case "keyword":
+        span.className = "keyword";
+        break;
+        case "string":
+        span.className = "string";
+        break;
+        case "number":
+        span.className = "number";
+        break;
+        case "comment":
+        span.className = "comment";
+        break;
+        case "function":
+        span.className = "function-name";
+        break;
+        case "builtin":
+        span.className = "builtin";
+        break;
+        case "operator":
+        span.className = "operator";
+        break;
+        case "whitespace":
+        case "text":
+        case "identifier":
+        default:
+        // No special styling
+        break;
     }
 
-    highlightFunctions(code) {
-        // Function declarations and calls
-        code = code.replace(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*(?=\()/g, '<span class="function-name">$1</span>');
-        return code;
-    }
+    container.appendChild(span);
+    });
 
-    highlightOperators(code) {
-        // Operators
-        code = code.replace(/([+\-*/%=<>!&|^~?:;,.])/g, '<span class="operator">$1</span>');
-        return code;
-    }
+    return container;
+}
 }
 
 // Initialize syntax highlighter
 const syntaxHighlighter = new SyntaxHighlighter();
 
-// Line Numbers Management
-function updateLineNumbers() {
-    const lines = codeInput.value.split("\n");
-    const lineCount = lines.length;
-    let lineNumbersText = "";
+// Fixed Code Display with Syntax Highlighting
+function updateDisplay() {
+const code = codeInput.value;
 
-    for (let i = 1; i <= lineCount; i++) {
-        lineNumbersText += i + "\n";
-    }
+// Clear previous content
+codeDisplay.innerHTML = "";
 
-    lineNumbers.textContent = lineNumbersText;
+// Apply syntax highlighting
+const highlightedContainer = syntaxHighlighter.highlight(code);
+
+// Append all highlighted elements
+while (highlightedContainer.firstChild) {
+    codeDisplay.appendChild(highlightedContainer.firstChild);
 }
 
-// Code Display with Syntax Highlighting
-function updateDisplay() {
-    const code = codeInput.value;
-    const highlighted = syntaxHighlighter.highlight(code);
-    codeDisplay.innerHTML = highlighted;
-    updateLineNumbers();
+updateLineNumbers();
+}
+
+// Line Numbers Management
+function updateLineNumbers() {
+const lines = codeInput.value.split("\n");
+const lineCount = lines.length;
+let lineNumbersText = "";
+
+for (let i = 1; i <= lineCount; i++) {
+    lineNumbersText += i + "\n";
+}
+
+lineNumbers.textContent = lineNumbersText;
 }
 
 // Console Output Management
 function logToOutput(message, type = "info") {
-    const logEntry = document.createElement("div");
-    logEntry.className = "log-entry";
+const logEntry = document.createElement("div");
+logEntry.className = "log-entry";
 
-    const arrow = document.createElement("span");
-    arrow.className = "log-arrow";
-    arrow.textContent = "→";
+const arrow = document.createElement("span");
+arrow.className = "log-arrow";
+arrow.textContent = "→";
 
-    const content = document.createElement("span");
-    content.className = `log-${type}`;
-    
-    // Handle object formatting
-    if (typeof message === 'object' && message !== null) {
-        try {
-            content.textContent = JSON.stringify(message, null, 2);
-        } catch (e) {
-            content.textContent = String(message);
-        }
-    } else {
-        content.textContent = String(message);
+const content = document.createElement("span");
+content.className = `log-${type}`;
+
+// Handle object formatting
+if (typeof message === "object" && message !== null) {
+    try {
+    content.textContent = JSON.stringify(message, null, 2);
+    } catch (e) {
+    content.textContent = String(message);
     }
+} else {
+    content.textContent = String(message);
+}
 
-    logEntry.appendChild(arrow);
-    logEntry.appendChild(content);
-    output.appendChild(logEntry);
+logEntry.appendChild(arrow);
+logEntry.appendChild(content);
+output.appendChild(logEntry);
 
-    // Auto-scroll to bottom
-    output.scrollTop = output.scrollHeight;
+// Auto-scroll to bottom
+output.scrollTop = output.scrollHeight;
 }
 
 // Console Capture Setup (Fixed to prevent duplicates)
 function setupConsoleCapture() {
-    if (isConsoleSetup) return;
-    isConsoleSetup = true;
+if (isConsoleSetup) return;
+isConsoleSetup = true;
 
-    // Store original console methods
-    const originalConsole = {
-        log: console.log,
-        error: console.error,
-        warn: console.warn,
-        info: console.info
-    };
+// Store original console methods
+const originalConsole = {
+    log: console.log,
+    error: console.error,
+    warn: console.warn,
+    info: console.info,
+};
 
-    // Override console methods
-    console.log = function(...args) {
-        const message = args.map(arg => {
-            if (typeof arg === "object" && arg !== null) {
-                try {
-                    return JSON.stringify(arg, null, 2);
-                } catch (e) {
-                    return String(arg);
-                }
-            }
+// Override console methods
+console.log = (...args) => {
+    const message = args
+    .map((arg) => {
+        if (typeof arg === "object" && arg !== null) {
+        try {
+            return JSON.stringify(arg, null, 2);
+        } catch (e) {
             return String(arg);
-        }).join(" ");
-        
-        logToOutput(message, "success");
-        // Don't call original to prevent duplicate output in browser console
-    };
+        }
+        }
+        return String(arg);
+    })
+    .join(" ");
 
-    console.error = function(...args) {
-        const message = args.map(arg => String(arg)).join(" ");
-        logToOutput(message, "error");
-    };
+    logToOutput(message, "success");
+    // Don't call original to prevent duplicate output in browser console
+};
 
-    console.warn = function(...args) {
-        const message = args.map(arg => String(arg)).join(" ");
-        logToOutput(message, "warning");
-    };
+console.error = (...args) => {
+    const message = args.map((arg) => String(arg)).join(" ");
+    logToOutput(message, "error");
+};
 
-    console.info = function(...args) {
-        const message = args.map(arg => String(arg)).join(" ");
-        logToOutput(message, "info");
-    };
+console.warn = (...args) => {
+    const message = args.map((arg) => String(arg)).join(" ");
+    logToOutput(message, "warning");
+};
+
+console.info = (...args) => {
+    const message = args.map((arg) => String(arg)).join(" ");
+    logToOutput(message, "info");
+};
 }
 
 // Code Execution Engine
 function executeCode() {
-    const code = codeInput.value.trim();
-    if (!code) return;
+const code = codeInput.value.trim();
+if (!code) return;
 
-    logToOutput("Executing code...", "info");
+logToOutput("Executing code...", "info");
 
-    try {
-        // Create isolated execution context
-        const executeFunction = new Function(`
+try {
+    // Create isolated execution context
+    const executeFunction = new Function(`
             "use strict";
             ${code}
         `);
-        
-        const result = executeFunction();
 
-        // Only log result if it's not undefined
-        if (result !== undefined) {
-            logToOutput(result, "success");
-        }
+    const result = executeFunction();
 
-        logToOutput("Code executed successfully", "success");
-    } catch (error) {
-        logToOutput(`Error: ${error.message}`, "error");
-        console.error("Execution error:", error);
+    // Only log result if it's not undefined
+    if (result !== undefined) {
+    logToOutput(result, "success");
     }
+
+    logToOutput("Code executed successfully", "success");
+} catch (error) {
+    logToOutput(`Error: ${error.message}`, "error");
+    console.error("Execution error:", error);
+}
 }
 
 // Output Management
 function clearOutput() {
-    output.innerHTML = `
+output.innerHTML = `
         <div class="log-entry">
             <span class="log-arrow">→</span>
             <span class="log-info">Output cleared</span>
@@ -243,7 +424,7 @@ function clearOutput() {
 
 // Example Code Loader
 function loadExample() {
-    const exampleCode = `// JavaScript Prototype Pattern Example
+const exampleCode = `// JavaScript Prototype Pattern Example
 function Person(name, age, job) {
     this.name = name || "Unknown";
     this.age = age || 0;
@@ -285,372 +466,397 @@ console.log("Original:", numbers);
 console.log("Doubled:", doubled);
 console.log("Sum:", numbers.reduce((a, b) => a + b, 0));`;
 
-    codeInput.value = exampleCode;
-    updateDisplay();
+codeInput.value = exampleCode;
+updateDisplay();
 }
 
 // Autocomplete System
 const autocompleteSuggestions = [
-    {
-        trigger: "function",
-        title: "Function Declaration",
-        snippet: "function functionName() {\n    // Your code here\n    return;\n}"
-    },
-    {
-        trigger: "func",
-        title: "Function Declaration",
-        snippet: "function functionName() {\n    // Your code here\n    return;\n}"
-    },
-    {
-        trigger: "arrow",
-        title: "Arrow Function",
-        snippet: "const functionName = () => {\n    // Your code here\n    return;\n};"
-    },
-    {
-        trigger: "=>",
-        title: "Arrow Function",
-        snippet: "const functionName = () => {\n    // Your code here\n};"
-    },
-    {
-        trigger: "console.log",
-        title: "Console Log",
-        snippet: "console.log();"
-    },
-    {
-        trigger: "console",
-        title: "Console Log",
-        snippet: "console.log();"
-    },
-    {
-        trigger: "log",
-        title: "Console Log",
-        snippet: "console.log();"
-    },
-    {
-        trigger: "for",
-        title: "For Loop",
-        snippet: "for (let i = 0; i < array.length; i++) {\n    // Your code here\n}"
-    },
-    {
-        trigger: "foreach",
-        title: "For Each Loop",
-        snippet: "array.forEach((item, index) => {\n    // Your code here\n});"
-    },
-    {
-        trigger: "if",
-        title: "If Statement",
-        snippet: "if (condition) {\n    // Your code here\n}"
-    },
-    {
-        trigger: "ifelse",
-        title: "If-Else Statement",
-        snippet: "if (condition) {\n    // Your code here\n} else {\n    // Alternative code\n}"
-    },
-    {
-        trigger: "const",
-        title: "Const Declaration",
-        snippet: "const variableName = value;"
-    },
-    {
-        trigger: "let",
-        title: "Let Declaration",
-        snippet: "let variableName = value;"
-    },
-    {
-        trigger: "var",
-        title: "Var Declaration",
-        snippet: "var variableName = value;"
-    },
-    {
-        trigger: "try",
-        title: "Try-Catch Block",
-        snippet: "try {\n    // Your code here\n} catch (error) {\n    console.error(error);\n}"
-    },
-    {
-        trigger: "class",
-        title: "Class Declaration",
-        snippet: "class ClassName {\n    constructor() {\n        // Constructor code\n    }\n    \n    method() {\n        // Method code\n    }\n}"
-    }
+{
+    trigger: "function",
+    title: "Function Declaration",
+    snippet: "function functionName() {\n    // Your code here\n    return;\n}",
+},
+{
+    trigger: "func",
+    title: "Function Declaration",
+    snippet: "function functionName() {\n    // Your code here\n    return;\n}",
+},
+{
+    trigger: "arrow",
+    title: "Arrow Function",
+    snippet:
+    "const functionName = () => {\n    // Your code here\n    return;\n};",
+},
+{
+    trigger: "=>",
+    title: "Arrow Function",
+    snippet: "const functionName = () => {\n    // Your code here\n};",
+},
+{
+    trigger: "console.log",
+    title: "Console Log",
+    snippet: "console.log();",
+},
+{
+    trigger: "console",
+    title: "Console Log",
+    snippet: "console.log();",
+},
+{
+    trigger: "log",
+    title: "Console Log",
+    snippet: "console.log();",
+},
+{
+    trigger: "for",
+    title: "For Loop",
+    snippet:
+    "for (let i = 0; i < array.length; i++) {\n    // Your code here\n}",
+},
+{
+    trigger: "foreach",
+    title: "For Each Loop",
+    snippet: "array.forEach((item, index) => {\n    // Your code here\n});",
+},
+{
+    trigger: "if",
+    title: "If Statement",
+    snippet: "if (condition) {\n    // Your code here\n}",
+},
+{
+    trigger: "ifelse",
+    title: "If-Else Statement",
+    snippet:
+    "if (condition) {\n    // Your code here\n} else {\n    // Alternative code\n}",
+},
+{
+    trigger: "const",
+    title: "Const Declaration",
+    snippet: "const variableName = value;",
+},
+{
+    trigger: "let",
+    title: "Let Declaration",
+    snippet: "let variableName = value;",
+},
+{
+    trigger: "var",
+    title: "Var Declaration",
+    snippet: "var variableName = value;",
+},
+{
+    trigger: "try",
+    title: "Try-Catch Block",
+    snippet:
+    "try {\n    // Your code here\n} catch (error) {\n    console.error(error);\n}",
+},
+{
+    trigger: "class",
+    title: "Class Declaration",
+    snippet:
+    "class ClassName {\n    constructor() {\n        // Constructor code\n    }\n    \n    method() {\n        // Method code\n    }\n}",
+},
 ];
 
 // Autocomplete Helper Functions
 function getCurrentWord() {
-    const text = codeInput.value;
-    const cursor = codeInput.selectionStart;
-    
-    let start = cursor;
-    while (start > 0 && /[\w.]/.test(text[start - 1])) {
-        start--;
-    }
-    
-    let end = cursor;
-    while (end < text.length && /\w/.test(text[end])) {
-        end++;
-    }
-    
-    return {
-        word: text.substring(start, end),
-        start: start,
-        end: end
-    };
+const text = codeInput.value;
+const cursor = codeInput.selectionStart;
+
+let start = cursor;
+while (start > 0 && /[\w.]/.test(text[start - 1])) {
+    start--;
+}
+
+let end = cursor;
+while (end < text.length && /\w/.test(text[end])) {
+    end++;
+}
+
+return {
+    word: text.substring(start, end),
+    start: start,
+    end: end,
+};
 }
 
 function getCaretCoordinates() {
-    const textBeforeCursor = codeInput.value.substring(0, codeInput.selectionStart);
-    const lines = textBeforeCursor.split('\n');
-    const currentLine = lines.length - 1;
-    const currentCol = lines[lines.length - 1].length;
-    
-    return { line: currentLine, col: currentCol };
+const textBeforeCursor = codeInput.value.substring(
+    0,
+    codeInput.selectionStart
+);
+const lines = textBeforeCursor.split("\n");
+const currentLine = lines.length - 1;
+const currentCol = lines[lines.length - 1].length;
+
+return { line: currentLine, col: currentCol };
 }
 
 function showAutocomplete(suggestions) {
-    if (suggestions.length === 0) {
-        hideAutocomplete();
-        return;
-    }
-    
-    autocompleteDropdown.innerHTML = '';
-    
-    suggestions.forEach((suggestion, index) => {
-        const item = document.createElement('div');
-        item.className = 'autocomplete-item';
-        if (index === 0) item.classList.add('selected');
-        
-        const title = document.createElement('div');
-        title.className = 'autocomplete-item-title';
-        title.textContent = suggestion.title;
-        
-        const snippet = document.createElement('div');
-        snippet.className = 'autocomplete-item-snippet';
-        snippet.textContent = suggestion.snippet.replace(/\n/g, ' ↵ ');
-        
-        item.appendChild(title);
-        item.appendChild(snippet);
-        
-        item.addEventListener('click', () => {
-            insertSuggestion(suggestion);
-            hideAutocomplete();
-        });
-        
-        autocompleteDropdown.appendChild(item);
+if (suggestions.length === 0) {
+    hideAutocomplete();
+    return;
+}
+
+autocompleteDropdown.innerHTML = "";
+
+suggestions.forEach((suggestion, index) => {
+    const item = document.createElement("div");
+    item.className = "autocomplete-item";
+    if (index === 0) item.classList.add("selected");
+
+    const title = document.createElement("div");
+    title.className = "autocomplete-item-title";
+    title.textContent = suggestion.title;
+
+    const snippet = document.createElement("div");
+    snippet.className = "autocomplete-item-snippet";
+    snippet.textContent = suggestion.snippet.replace(/\n/g, " ↵ ");
+
+    item.appendChild(title);
+    item.appendChild(snippet);
+
+    item.addEventListener("click", () => {
+    insertSuggestion(suggestion);
+    hideAutocomplete();
     });
-    
-    // Position autocomplete dropdown
-    positionAutocomplete();
-    autocompleteDropdown.style.display = 'block';
-    selectedIndex = 0;
+
+    autocompleteDropdown.appendChild(item);
+});
+
+// Position autocomplete dropdown
+positionAutocomplete();
+autocompleteDropdown.style.display = "block";
+selectedIndex = 0;
 }
 
 function positionAutocomplete() {
-    const editorRect = codeInput.getBoundingClientRect();
-    const containerRect = codeInput.parentElement.getBoundingClientRect();
-    const caretPos = getCaretCoordinates();
-    
-    const lineHeight = 21;
-    const charWidth = 8.4;
-    const scrollTop = codeInput.scrollTop;
-    const scrollLeft = codeInput.scrollLeft;
-    
-    // Calculate position relative to the editor container
-    let left = 60 + (caretPos.col * charWidth) - scrollLeft;
-    let top = 20 + ((caretPos.line + 1) * lineHeight) - scrollTop;
-    
-    // Ensure dropdown stays within bounds
-    const dropdownWidth = 280;
-    const dropdownHeight = 200;
-    
-    if (left + dropdownWidth > containerRect.width) {
-        left = containerRect.width - dropdownWidth - 10;
-    }
-    
-    if (top + dropdownHeight > containerRect.height) {
-        top = Math.max(20, top - dropdownHeight - lineHeight);
-    }
-    
-    autocompleteDropdown.style.left = `${Math.max(10, left)}px`;
-    autocompleteDropdown.style.top = `${Math.max(10, top)}px`;
+const editorRect = codeInput.getBoundingClientRect();
+const containerRect = codeInput.parentElement.getBoundingClientRect();
+const caretPos = getCaretCoordinates();
+
+const lineHeight = 21;
+const charWidth = 8.4;
+const scrollTop = codeInput.scrollTop;
+const scrollLeft = codeInput.scrollLeft;
+
+// Calculate position relative to the editor container
+let left = 60 + caretPos.col * charWidth - scrollLeft;
+let top = 20 + (caretPos.line + 1) * lineHeight - scrollTop;
+
+// Ensure dropdown stays within bounds
+const dropdownWidth = 280;
+const dropdownHeight = 200;
+
+if (left + dropdownWidth > containerRect.width) {
+    left = containerRect.width - dropdownWidth - 10;
+}
+
+if (top + dropdownHeight > containerRect.height) {
+    top = Math.max(20, top - dropdownHeight - lineHeight);
+}
+
+autocompleteDropdown.style.left = `${Math.max(10, left)}px`;
+autocompleteDropdown.style.top = `${Math.max(10, top)}px`;
 }
 
 function hideAutocomplete() {
-    autocompleteDropdown.style.display = 'none';
-    selectedIndex = -1;
+autocompleteDropdown.style.display = "none";
+selectedIndex = -1;
 }
 
 function insertSuggestion(suggestion) {
-    const currentWord = getCurrentWord();
-    const text = codeInput.value;
-    const before = text.substring(0, currentWord.start);
-    const after = text.substring(currentWord.end);
-    
-    const newText = before + suggestion.snippet + after;
-    codeInput.value = newText;
-    
-    // Position cursor intelligently
-    let cursorPos = before.length + suggestion.snippet.length;
-    
-    if (suggestion.snippet.includes('()')) {
-        cursorPos = before.length + suggestion.snippet.indexOf('()') + 1;
-    } else if (suggestion.snippet.includes('functionName')) {
-        const nameStart = before.length + suggestion.snippet.indexOf('functionName');
-        codeInput.focus();
-        codeInput.setSelectionRange(nameStart, nameStart + 'functionName'.length);
-        updateDisplay();
-        return;
-    } else if (suggestion.snippet.includes('condition')) {
-        const conditionStart = before.length + suggestion.snippet.indexOf('condition');
-        codeInput.focus();
-        codeInput.setSelectionRange(conditionStart, conditionStart + 'condition'.length);
-        updateDisplay();
-        return;
-    }
-    
+const currentWord = getCurrentWord();
+const text = codeInput.value;
+const before = text.substring(0, currentWord.start);
+const after = text.substring(currentWord.end);
+
+const newText = before + suggestion.snippet + after;
+codeInput.value = newText;
+
+// Position cursor intelligently
+let cursorPos = before.length + suggestion.snippet.length;
+
+if (suggestion.snippet.includes("()")) {
+    cursorPos = before.length + suggestion.snippet.indexOf("()") + 1;
+} else if (suggestion.snippet.includes("functionName")) {
+    const nameStart =
+    before.length + suggestion.snippet.indexOf("functionName");
     codeInput.focus();
-    codeInput.setSelectionRange(cursorPos, cursorPos);
+    codeInput.setSelectionRange(nameStart, nameStart + "functionName".length);
     updateDisplay();
+    return;
+} else if (suggestion.snippet.includes("condition")) {
+    const conditionStart =
+    before.length + suggestion.snippet.indexOf("condition");
+    codeInput.focus();
+    codeInput.setSelectionRange(
+    conditionStart,
+    conditionStart + "condition".length
+    );
+    updateDisplay();
+    return;
+}
+
+codeInput.focus();
+codeInput.setSelectionRange(cursorPos, cursorPos);
+updateDisplay();
 }
 
 function handleAutocompleteInput() {
-    const currentWord = getCurrentWord();
-    
-    if (currentWord.word.length < 2) {
-        hideAutocomplete();
-        return;
-    }
-    
-    const filteredSuggestions = autocompleteSuggestions.filter(suggestion =>
-        suggestion.trigger.toLowerCase().startsWith(currentWord.word.toLowerCase())
-    );
-    
-    if (filteredSuggestions.length > 0) {
-        showAutocomplete(filteredSuggestions);
-    } else {
-        hideAutocomplete();
-    }
+const currentWord = getCurrentWord();
+
+if (currentWord.word.length < 2) {
+    hideAutocomplete();
+    return;
+}
+
+const filteredSuggestions = autocompleteSuggestions.filter((suggestion) =>
+    suggestion.trigger.toLowerCase().startsWith(currentWord.word.toLowerCase())
+);
+
+if (filteredSuggestions.length > 0) {
+    showAutocomplete(filteredSuggestions);
+} else {
+    hideAutocomplete();
+}
 }
 
 function navigateAutocomplete(direction) {
-    const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
-    if (items.length === 0) return false;
-    
-    if (selectedIndex >= 0 && selectedIndex < items.length) {
-        items[selectedIndex].classList.remove('selected');
-    }
-    
-    if (direction === 'down') {
-        selectedIndex = (selectedIndex + 1) % items.length;
-    } else if (direction === 'up') {
-        selectedIndex = selectedIndex <= 0 ? items.length - 1 : selectedIndex - 1;
-    }
-    
-    items[selectedIndex].classList.add('selected');
-    items[selectedIndex].scrollIntoView({ block: 'nearest' });
-    
-    return true;
+const items = autocompleteDropdown.querySelectorAll(".autocomplete-item");
+if (items.length === 0) return false;
+
+if (selectedIndex >= 0 && selectedIndex < items.length) {
+    items[selectedIndex].classList.remove("selected");
+}
+
+if (direction === "down") {
+    selectedIndex = (selectedIndex + 1) % items.length;
+} else if (direction === "up") {
+    selectedIndex = selectedIndex <= 0 ? items.length - 1 : selectedIndex - 1;
+}
+
+items[selectedIndex].classList.add("selected");
+items[selectedIndex].scrollIntoView({ block: "nearest" });
+
+return true;
 }
 
 function acceptSuggestion() {
-    const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
-    if (selectedIndex >= 0 && selectedIndex < items.length) {
-        const titleElement = items[selectedIndex].querySelector('.autocomplete-item-title');
-        const suggestion = autocompleteSuggestions.find(s => s.title === titleElement.textContent);
-        if (suggestion) {
-            insertSuggestion(suggestion);
-            hideAutocomplete();
-            return true;
-        }
+const items = autocompleteDropdown.querySelectorAll(".autocomplete-item");
+if (selectedIndex >= 0 && selectedIndex < items.length) {
+    const titleElement = items[selectedIndex].querySelector(
+    ".autocomplete-item-title"
+    );
+    const suggestion = autocompleteSuggestions.find(
+    (s) => s.title === titleElement.textContent
+    );
+    if (suggestion) {
+    insertSuggestion(suggestion);
+    hideAutocomplete();
+    return true;
     }
-    return false;
+}
+return false;
 }
 
 // Event Listeners
 codeInput.addEventListener("input", (e) => {
-    updateDisplay();
-    
-    // Clear previous timeout
-    if (autocompleteTimeout) {
-        clearTimeout(autocompleteTimeout);
-    }
-    
-    // Set new timeout for autocomplete
-    autocompleteTimeout = setTimeout(() => {
-        handleAutocompleteInput();
-    }, 200);
+updateDisplay();
+
+// Clear previous timeout
+if (autocompleteTimeout) {
+    clearTimeout(autocompleteTimeout);
+}
+
+// Set new timeout for autocomplete
+autocompleteTimeout = setTimeout(() => {
+    handleAutocompleteInput();
+}, 200);
 });
 
 codeInput.addEventListener("scroll", () => {
-    codeDisplay.scrollTop = codeInput.scrollTop;
-    lineNumbers.scrollTop = codeInput.scrollTop;
-    
-    // Reposition autocomplete if visible
-    if (autocompleteDropdown.style.display === 'block') {
-        positionAutocomplete();
-    }
+codeDisplay.scrollTop = codeInput.scrollTop;
+lineNumbers.scrollTop = codeInput.scrollTop;
+
+// Reposition autocomplete if visible
+if (autocompleteDropdown.style.display === "block") {
+    positionAutocomplete();
+}
 });
 
 codeInput.addEventListener("keydown", (e) => {
-    // Handle autocomplete navigation
-    if (autocompleteDropdown.style.display === 'block') {
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            navigateAutocomplete('down');
-            return;
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            navigateAutocomplete('up');
-            return;
-        } else if (e.key === 'Enter' || e.key === 'Tab') {
-            if (acceptSuggestion()) {
-                e.preventDefault();
-                return;
-            }
-        } else if (e.key === 'Escape') {
-            hideAutocomplete();
-            return;
-        }
-    }
-    
-    // Execute code
-    if (e.ctrlKey && e.key === "Enter") {
+// Handle autocomplete navigation
+if (autocompleteDropdown.style.display === "block") {
+    if (e.key === "ArrowDown") {
+    e.preventDefault();
+    navigateAutocomplete("down");
+    return;
+    } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    navigateAutocomplete("up");
+    return;
+    } else if (e.key === "Enter" || e.key === "Tab") {
+    if (acceptSuggestion()) {
         e.preventDefault();
-        executeCode();
         return;
     }
+    } else if (e.key === "Escape") {
+    hideAutocomplete();
+    return;
+    }
+}
 
-    // Tab indentation
-    if (e.key === "Tab") {
-        e.preventDefault();
-        const start = codeInput.selectionStart;
-        const end = codeInput.selectionEnd;
-        codeInput.value = codeInput.value.substring(0, start) + "    " + codeInput.value.substring(end);
-        codeInput.selectionStart = codeInput.selectionEnd = start + 4;
-        updateDisplay();
-        return;
-    }
+// Execute code
+if (e.ctrlKey && e.key === "Enter") {
+    e.preventDefault();
+    executeCode();
+    return;
+}
+
+// Tab indentation
+if (e.key === "Tab") {
+    e.preventDefault();
+    const start = codeInput.selectionStart;
+    const end = codeInput.selectionEnd;
+    codeInput.value =
+    codeInput.value.substring(0, start) +
+    "    " +
+    codeInput.value.substring(end);
+    codeInput.selectionStart = codeInput.selectionEnd = start + 4;
+    updateDisplay();
+    return;
+}
 });
 
 // Hide autocomplete when clicking outside
-document.addEventListener('click', (e) => {
-    if (!codeInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
-        hideAutocomplete();
-    }
+document.addEventListener("click", (e) => {
+if (
+    !codeInput.contains(e.target) &&
+    !autocompleteDropdown.contains(e.target)
+) {
+    hideAutocomplete();
+}
 });
 
 // Hide autocomplete when textarea loses focus
-codeInput.addEventListener('blur', () => {
-    setTimeout(() => {
-        if (document.activeElement !== autocompleteDropdown && 
-            !autocompleteDropdown.contains(document.activeElement)) {
-            hideAutocomplete();
-        }
-    }, 150);
+codeInput.addEventListener("blur", () => {
+setTimeout(() => {
+    if (
+    document.activeElement !== autocompleteDropdown &&
+    !autocompleteDropdown.contains(document.activeElement)
+    ) {
+    hideAutocomplete();
+    }
+}, 150);
 });
 
 // Initialize the application
 function initializeApp() {
-    setupConsoleCapture();
-    updateDisplay();
-    loadExample();
+setupConsoleCapture();
+updateDisplay();
+loadExample();
 }
 
 // Start the application
