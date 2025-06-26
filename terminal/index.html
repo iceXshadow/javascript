@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live JavaScript Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+    <div class="terminal-container">
+        <!-- Code Editor Panel -->
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="terminal-dots">
+                    <div class="dot close"></div>
+                    <div class="dot minimize"></div>
+                    <div class="dot maximize"></div>
+                </div>
+                <div class="terminal-title">editor.js — Live JavaScript</div>
+            </div>
+
+            <div class="terminal-body">
+                <div class="controls">
+                    <button class="btn run" onclick="executeCode()">Run Code (Ctrl+Enter)</button>
+                    <button class="btn clear" onclick="clearOutput()">Clear Output</button>
+                    <button class="btn" onclick="loadExample()">Load Example</button>
+                </div>
+
+                <div class="code-editor">
+                    <div class="editor-header">JavaScript Code Editor</div>
+                    <div class="editor-content">
+                        <div class="line-numbers" id="lineNumbers"></div>
+                        <textarea class="code-input" id="codeInput" placeholder="// Type your JavaScript code here...
+// Try: console.log('Hello Terminal!');
+// Or create functions, objects, etc." spellcheck="false"></textarea>
+                        <div class="code-display" id="codeDisplay"></div>
+                        <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="terminal-dots">
+                    <div class="dot close"></div>
+                    <div class="dot minimize"></div>
+                    <div class="dot maximize"></div>
+                </div>
+                <div class="terminal-title">output — Console</div>
+            </div>
+
+            <div class="terminal-body">
+                <div class="output-section">
+                    <div class="output-header">Console Output</div>
+                    <div class="output-content" id="output">
+                        <div class="log-entry">
+                            <span class="log-arrow">→</span>
+                            <span class="log-info">Welcome to Live JavaScript Terminal! Type code and press Ctrl+Enter
+                                to execute.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./index.js">
+
+    </script>
+</body>
+
+</html>
