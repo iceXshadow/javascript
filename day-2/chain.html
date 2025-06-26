@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript">
+        // Prototype Chaining
+
+        // Constructor function for SuperType
+        function SuperType() { // prototype{} => at this moment it is empty
+            this.property = true; // Instance property
+        }
+
+        // Adding a method to SuperType's prototype
+        SuperType.prototype.getSuperValue = function() { // we populated the prototype with getSuperValue method
+            return this.property;
+        }
+
+        // Constructor function for SubType
+        function SubType() {
+            this.subproperty = false; // Instance property
+        }
+
+        // Inherit from SuperType by setting SubType's prototype to a new SuperType instance
+        SubType.prototype = new SuperType(); // linking one prototype to another
+
+        // Add a method to SubType's prototype
+        SubType.prototype.getSubValue = function() {
+            return this.subproperty;
+        }
+
+        // Create an instance of SubType
+        var instance = new SubType(); // [instance, SubType.prototype, SuperType.prototype]
+
+        // Check the instance relationships using instanceof
+        console.log(instance instanceof Object);      // true, all objects inherit from Object
+        console.log(instance instanceof SuperType);   // true, because of prototype chaining
+        console.log(instance instanceof SubType);     // true, direct instance
+
+        // Check the prototype chain using isPrototypeOf
+        console.log(Object.prototype.isPrototypeOf(instance));      // true
+        console.log(SuperType.prototype.isPrototypeOf(instance));   // true
+        console.log(SubType.prototype.isPrototypeOf(instance));     // true
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript">
+        function Person() {} // constructor
+
+        Person.prototype = {
+            constructor: Person,
+            name: "Ice", // primitive
+            age: 21, // primitive
+            role: "Software Developer", // primitive
+            // friends: ["Evo", "Zach"], // friends is an Array therefore it is a referenced type
+            sayName: function() {
+                console.log(this.name);
+            }
+        }
+
+        var p1 = new Person();  // [p1, Person.prototype]
+        var p2 = new Person();  // [p2, Person.prototype]
+
+        p1.friends.push("Adam");
+
+        console.log(p1.friends); // Evo, Zach, Adam ?
+        console.log(p2.friends); // Evo, Zach, Adam ? -- the prototype is being modified instead of the instance p1! : Therefore referenced types should not be allowed inside a prototype.
+        // only ref type allowed are common functions
+        // therefore we should put varying methods in the constructor hence generating a hybrid of constructor and prototype pattern -> constructorprototype pattern.
+
+        function Hybrid(name, age, role) {
+            this.name = name;
+            this.age = age;
+            this.role = role;
+            this.friends = ["Evo", "Zach"];
+        }
+
+        Hybrid.prototype = {
+            constructor: Hybrid,
+            introduce: function() {
+                console.log(this.name);
+            }
+        }
+
+
+        var h1 = new Hybrid("Ice", 21, "S/W Developer Intern");
+        var h2 = new Hybrid("Lemon", 21, "Data Analyst");
+        
+        h1.friends.push("Lemon");
+        
+        console.log(h1.friends);
+        console.log(h2.friends);
+
+        console.log(h1.friends === h2.friends)
+        console.log(h1 === h2)
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

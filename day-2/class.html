@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript">
+        /* classes in js are nothing but functions bts, it has two scopes => Constructor and Prototype */ 
+
+        class Rectangle { // prototype scope
+
+            
+            
+            constructor(length, breadth) { // func scope
+                this.length = length;
+                this.breadth = breadth;
+            }
+            
+            getDetails = function() {
+                console.log("share some details");
+            }
+
+            area = function(l, b) {
+                return l * b;
+            }
+        }
+
+        console.log(typeof Rectangle); // function
+        console.log(typeof Rectangle.prototype); // object
+
+        var shape = new Rectangle(12, 23);
+        shape.getDetails();
+        console.log(shape.area(shape.length, shape.breadth));
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
